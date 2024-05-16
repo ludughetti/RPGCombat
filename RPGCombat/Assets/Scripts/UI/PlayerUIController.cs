@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class PlayerUIController : CharacterUIController
 {
@@ -10,6 +11,10 @@ public class PlayerUIController : CharacterUIController
     [SerializeField] private List<ActionIcon> meleeTargetIcons;
     [SerializeField] private List<ActionIcon> rangedTargetIcons;
 
+    private int _healTargets = 0;
+    private int _meleeTargets = 0;
+    private int _rangedTargets = 0;
+
     public void UpdateIcons()
     {
         List<ActionTarget> actionTargets = character.GetActionTargets();
@@ -18,27 +23,33 @@ public class PlayerUIController : CharacterUIController
             if (target.IsHealTarget())
             {
                 Debug.Log($"{name}: Heal target {target.GetTarget().name} processed");
-                AssignTargetsToIcons(target, healTargetIcons);
+                _healTargets++;
+                AssignTargets(target, healTargetIcons);
             }
             else if (target.IsMeleeAttackTarget())
             {
                 Debug.Log($"{name}: Melee attack target {target.GetTarget().name} processed");
-                AssignTargetsToIcons(target, meleeTargetIcons);
+                _meleeTargets++;
+                AssignTargets(target, meleeTargetIcons);
             }   
             else
             {
                 Debug.Log($"{name}: Ranged attack target {target.GetTarget().name} processed");
-                AssignTargetsToIcons(target, rangedTargetIcons);
+                _rangedTargets++;
+                AssignTargets(target, rangedTargetIcons);
             }
         }
 
         // Show or hide target icons depending on whether each array has targets
-        ShowHideTargetMenu(healTargetIcons, healMenu);
-        ShowHideTargetMenu(meleeTargetIcons, meleeAttackMenu);
-        ShowHideTargetMenu(rangedTargetIcons, rangedAttackMenu);
+        Debug.Log($"{name}: _healTargets value is {_healTargets}");
+        ShowHideTargetMenu(_healTargets, healMenu);
+        Debug.Log($"{name}: _meleeTargets value is {_meleeTargets}");
+        ShowHideTargetMenu(_meleeTargets, meleeAttackMenu);
+        Debug.Log($"{name}: _rangedTargets value is {_rangedTargets}");
+        ShowHideTargetMenu(_rangedTargets, rangedAttackMenu);
     }
 
-    private void AssignTargetsToIcons(ActionTarget target, List<ActionIcon> actionIconsArray)
+    private void AssignTargets(ActionTarget target, List<ActionIcon> actionIconsArray)
     {
         foreach (var actionIcon in actionIconsArray)
         {
@@ -50,9 +61,9 @@ public class PlayerUIController : CharacterUIController
         }
     }
 
-    private void ShowHideTargetMenu(List<ActionIcon> icons, GameObject menu)
+    private void ShowHideTargetMenu(int count, GameObject menu)
     {
-        if (icons.Count > 0)
+        if (count > 0)
             menu.SetActive(true);
         else
             menu.SetActive(false);
@@ -65,13 +76,13 @@ public class PlayerUIController : CharacterUIController
         ResetOptions(meleeTargetIcons);
         ResetOptions(rangedTargetIcons);
 
-        healTargetIcons.Clear();
-        meleeTargetIcons.Clear();
-        rangedTargetIcons.Clear();
+        _healTargets = 0;
+        _meleeTargets = 0;
+        _rangedTargets = 0;
 
-        ShowHideTargetMenu(healTargetIcons, healMenu);
-        ShowHideTargetMenu(meleeTargetIcons, meleeAttackMenu);
-        ShowHideTargetMenu(rangedTargetIcons, rangedAttackMenu);
+        ShowHideTargetMenu(_healTargets, healMenu);
+        ShowHideTargetMenu(_meleeTargets, meleeAttackMenu);
+        ShowHideTargetMenu(_rangedTargets, rangedAttackMenu);
     }
 
     private void ResetOptions(List<ActionIcon> icons)
@@ -80,7 +91,5 @@ public class PlayerUIController : CharacterUIController
         {
             icon.ResetActionIcon();
         }
-
-        icons.Clear();
     }
 }

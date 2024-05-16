@@ -9,9 +9,20 @@ public class Player : Character
         return healRange;
     }
 
-    public override void HealTarget(Player target)
+    public override void ReceiveHeal(int healAmount)
     {
-        target._currentHP += healAmount;
+        int finalHPAmount = _currentHP + healAmount;
+        if (finalHPAmount >= hp)
+            _currentHP = hp;
+        else
+            _currentHP = finalHPAmount;
+
+        OnHealReceived.Invoke();
+    }
+
+    public override int GetHealAmount()
+    {
+        return healAmount;
     }
 
     public override void UpdateIcons()

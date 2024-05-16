@@ -5,7 +5,7 @@ using UnityEngine;
 public class Character : MonoBehaviour
 {
     [SerializeField] private GameController gameController;
-    [SerializeField] private int hp;
+    [SerializeField] protected int hp;
     [SerializeField] private int speed;
     [SerializeField] private int moveAttemptsPerTurn = 5;
     [SerializeField] protected int healAmount = 0;
@@ -19,7 +19,8 @@ public class Character : MonoBehaviour
     [SerializeField] protected SpriteRenderer iconRenderer;
     [SerializeField] private GameObject activeCharacterIcon;
 
-    public Action<int> OnDamageTaken = delegate { };
+    public Action OnDamageTaken = delegate { };
+    public Action OnHealReceived = delegate { };
 
     protected int _currentHP;
     private bool _hasCharacterAttacked = false;
@@ -32,16 +33,6 @@ public class Character : MonoBehaviour
     {
         _currentHP = hp;
         Debug.Log($"{name}: awakened, _currentHP is {_currentHP}");
-    }
-
-    private void OnEnable()
-    {
-        OnDamageTaken += TakeDamage;
-    }
-
-    private void OnDisable()
-    {
-        OnDamageTaken -= TakeDamage;
     }
 
     public Sprite GetCharacterIcon()
@@ -91,9 +82,15 @@ public class Character : MonoBehaviour
         return 0;
     }
 
-    public virtual void HealTarget(Player target)
+    public virtual void ReceiveHeal(int healAmount)
     {
         Debug.Log("Not implemented for characters");
+    }
+
+    public virtual int GetHealAmount()
+    {
+        Debug.Log("Not implemented for characters");
+        return 0;
     }
 
     public Vector2 GetCurrentPosition()
@@ -116,9 +113,9 @@ public class Character : MonoBehaviour
         return meleeRange;
     }
 
-    public void MeleeAttack(Character target)
+    public int GetMeleeDamage()
     {
-        target.OnDamageTaken.Invoke(meleeDamage);
+        return meleeDamage;
     }
 
     public bool HasRangedAttack()
@@ -131,21 +128,15 @@ public class Character : MonoBehaviour
         return rangedRange;
     }
 
-    public void RangedAttack(Character target)
+    public int GetRangedDamage()
     {
-        if (hasRangedAttack)
-            target.OnDamageTaken.Invoke(rangedDamage);
+        return rangedDamage;
     }
 
     public void TakeDamage(int damage)
     {
         _currentHP -= damage;
-    }
-
-    [ContextMenu("InvokeHPDelegate")]
-    private void TestDelegateHP()
-    {
-        OnDamageTaken.Invoke(5);
+        OnDamageTaken.Invoke();
     }
 
     public void ToggleIsCharacterActive(bool isActive)
@@ -157,6 +148,7 @@ public class Character : MonoBehaviour
             _currentMovements = speed;
             _currentMoveAttempts = moveAttemptsPerTurn;
             _hasCharacterAttacked = false;
+            _targets.Clear();
         }
     }
 
@@ -223,6 +215,9 @@ public class Character : MonoBehaviour
 
     public void HideDeadCharacter()
     {
+        _currentCell.SetIsOccupied(false);
+        _currentCell.SetOccupyingCharacter(null);
+        _currentCell = null;
         gameObject.SetActive(false);
     }
 }

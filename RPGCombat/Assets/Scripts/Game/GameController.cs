@@ -5,15 +5,17 @@ using UnityEngine;
 public class GameController : MonoBehaviour
 {
     [SerializeField] private List<Character> characters;
+    [SerializeField] private EndgameScreen endgameScreen;
     [SerializeField] private GridCell[] cells;
     [SerializeField] private int gridWidth = 6;
     [SerializeField] private int gridHeight = 4;
+    [SerializeField] private Transform cemetery;
 
     bool _isGameOver = false;
     private int _turnCounter = 0;
     private int _pveEnemiesLeft;
     private Character _activeCharacter;
-    private Dictionary<Vector2, GridCell> _cellsByPosition = new Dictionary<Vector2, GridCell>();
+    private Dictionary<Vector2, GridCell> _cellsByPosition = new ();
     private Character _characterToRemove;
 
     private void OnEnable()
@@ -28,6 +30,10 @@ public class GameController : MonoBehaviour
 
     private void Start()
     {
+        // We cap FPS at 60 
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
         StartCoroutine(PlayGame());
     }
 
@@ -103,14 +109,18 @@ public class GameController : MonoBehaviour
         {
             _turnCounter++;
 
-            for (int i = 0; i < characters.Count; i++) { 
-                _activeCharacter = characters[i];
-                Debug.Log($"{name}: Starting {_activeCharacter.name}'s turn.");
-                if (!_activeCharacter.IsAlive())
+            for (int i = 0; i < characters.Count; i++) {
+                Debug.Log($"Status: characters.Count is {characters.Count}, index is {i}");
+                if (characters.Count < i)
                 {
-                    Debug.Log($"{name}: {_activeCharacter.name} is dead! Turn skipped.");
+                    Debug.Log($"{name}: Character is dead and will be removed. Turn skipped.");
                     continue;
                 }
+
+                // FYI: An error might be thrown here due to an Editor bug if the characters array
+                // is open in the editor. Minimizing the array in the Editor UI will fix it.
+                _activeCharacter = characters[i];
+                Debug.Log($"{name}: Starting {_activeCharacter.name}'s turn.");
 
                 // Wait until character turn is over
                 yield return CharacterPlayTurn();
@@ -125,7 +135,11 @@ public class GameController : MonoBehaviour
             }
         }
 
-        Debug.Log($"Game over! {characters[0].name} won!");
+        if (_pveEnemiesLeft > 0)
+            endgameScreen.ShowEndgameScreen(false, _turnCounter, "");
+        else
+            endgameScreen.ShowEndgameScreen(true, _turnCounter, characters[0].name);
+
         yield return null;
     }
 
@@ -135,18 +149,24 @@ public class GameController : MonoBehaviour
         {
             CheckIfEndgameWasTriggered();
             int deadCharacterIndex = characters.IndexOf(_characterToRemove);
-            Debug.Log($"Remove character at index {deadCharacterIndex}");
 
-            // Should never happen but it's a security check in case IndexOf returns -1 (not found)
+            // Should never happen but it's a security check in case IndexOf returns not found
             if(deadCharacterIndex >= 0)
             {
+                // Move to cemetery
+                _characterToRemove.transform.SetParent(cemetery);
+                _characterToRemove.transform.localPosition = Vector2.zero;
+
+                // Hide
                 _characterToRemove.HideDeadCharacter();
+
+                Debug.Log($"Remove character at index {deadCharacterIndex}");
                 characters.RemoveAt(deadCharacterIndex);
             }
 
             // Reset _characterToRemove and update loop index
             _characterToRemove = null;
-            index--;
+            //index--;
         }
 
         updatedIndex = index;
@@ -216,6 +236,9 @@ public class GameController : MonoBehaviour
             MoveCharacterToPosition(new Vector2(xCoord, yCoord));
         }
 
+        // Wait so player can see the movement
+        yield return new WaitForSeconds(1);
+
         // Check attack areas
         CheckActionAreas();
 
@@ -228,14 +251,23 @@ public class GameController : MonoBehaviour
             _activeCharacter.SetHasCharacterAttacked(true);
         }
 
+        // Wait so player can see the attack
+        yield return new WaitForSeconds(1);
+
         yield return null;
     }
 
-    // Receive input and move
+    public void ReceiveInputAndMove(Vector2 position)
+    {
+        if (_activeCharacter.IsPlayer())
+            MoveCharacterToPosition(position);
+    }
+
+    // Move
     public void MoveCharacterToPosition(Vector2 position)
     {
-        Debug.Log($"{name}: input received for {_activeCharacter.name}, value is {position}.");
-        // Early exit if character has no movements left
+        Debug.Log($"{name}: input received for {_activeCharacter.name}, value is {position}, current position is {_activeCharacter.GetCurrentPosition()}.");
+        // Early exit if it's AI or if the character has no movements left
         if (_activeCharacter.GetCurrentMovementsLeft() <= 0)
             return;
 
@@ -329,18 +361,17 @@ public class GameController : MonoBehaviour
         return true;
     }
 
-    // Attack
     public void ExecuteActionOnTarget(ActionTarget target)
     {
         Character characterTarget = target.GetTarget();
         Debug.Log($"{_activeCharacter.name} is executing action on {characterTarget.name}");
 
-        if (target.IsHealTarget())
-            _activeCharacter.HealTarget((Player) characterTarget);
+        if (target.IsHealTarget() && characterTarget.IsPlayer())
+            characterTarget.ReceiveHeal(_activeCharacter.GetHealAmount());
         else if (target.IsMeleeAttackTarget())
-            _activeCharacter.MeleeAttack(characterTarget);
+            characterTarget.TakeDamage(_activeCharacter.GetMeleeDamage());
         else
-            _activeCharacter.RangedAttack(characterTarget);
+            characterTarget.TakeDamage(_activeCharacter.GetRangedDamage());
 
         _activeCharacter.SetHasCharacterAttacked(true);
 

@@ -26,8 +26,9 @@ public class HPBar : MonoBehaviour
         Debug.Log($"{name}: initialized with hp value {_currentValue}");
     }
 
-    public void UpdateBarOnDamageReceived(float damageReceived)
+    public void UpdateBarOnDamageReceived(float currentHP)
     {
-        _currentValue -= damageReceived;
+        Debug.Log($"{name}: Updating HP bar, setting _currentValue to {currentHP}");
+        _currentValue = currentHP;
     }
 }

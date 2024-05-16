@@ -26,9 +26,10 @@ public class ActionIcon : MonoBehaviour
 
     public void ResetActionIcon()
     {
-        icon = null;
         _target = null;
         _hasTarget = false;
+        icon.sprite = null;
+        gameObject.SetActive(false);
     }
 
     public ActionTarget GetTarget()

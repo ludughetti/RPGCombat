@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class PlayerInput : MonoBehaviour
 {
     [SerializeField] private GameController controller;
+    [SerializeField] private float cooldown = 0.25f;
 
     private float _cooldown = 0f;
 
@@ -18,9 +19,9 @@ public class PlayerInput : MonoBehaviour
     {
         if(context.performed && _cooldown <= 0f)
         {
-            _cooldown = 1f;
+            _cooldown = cooldown;
             Vector2 position = context.ReadValue<Vector2>();
-            controller.MoveCharacterToPosition(new Vector2(-position.y, position.x).normalized);
+            controller.ReceiveInputAndMove(new Vector2(-position.y, position.x).normalized);
         }
     }
 }

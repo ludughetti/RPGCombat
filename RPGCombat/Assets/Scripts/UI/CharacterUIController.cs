@@ -11,7 +11,18 @@ public class CharacterUIController : MonoBehaviour
 
     private void OnEnable()
     {
-        character.OnDamageTaken += UpdateBarOnDamageReceived;
+        character.OnDamageTaken += UpdateBarOnHealthChange;
+
+        if (character.IsPlayer())
+            character.OnHealReceived += UpdateBarOnHealthChange;
+    }
+
+    private void OnDisable()
+    {
+        character.OnDamageTaken -= UpdateBarOnHealthChange;
+
+        if (character.IsPlayer())
+            character.OnHealReceived -= UpdateBarOnHealthChange;
     }
 
     private void Start()
@@ -23,13 +34,10 @@ public class CharacterUIController : MonoBehaviour
         Debug.Log($"{name}: UI setup for character {character.name}");
     }
 
-    private void OnDisable()
+    // damageReceived is not used aside from logging
+    public void UpdateBarOnHealthChange()
     {
-        character.OnDamageTaken -= UpdateBarOnDamageReceived;
-    }
-
-    public void UpdateBarOnDamageReceived(int damageReceived)
-    {
-        hpBar.UpdateBarOnDamageReceived((float)damageReceived);
+        Debug.Log($"{name}: A health change was received. HP Bar will be updated.");
+        hpBar.UpdateBarOnDamageReceived((float) character.GetCurrentHP());
     }
 }
