@@ -36,6 +36,7 @@ public class PlayerUIController : CharacterUIController
             if(!actionIcon.HasTarget())
             {
                 actionIcon.SetTarget(target);
+                break;
             }
         }
     }

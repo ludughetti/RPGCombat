@@ -31,6 +31,7 @@ public class Character : MonoBehaviour
     private void Awake()
     {
         _currentHP = hp;
+        Debug.Log($"{name}: awakened, _currentHP is {_currentHP}");
     }
 
     private void OnEnable()
@@ -155,6 +156,7 @@ public class Character : MonoBehaviour
         {
             _currentMovements = speed;
             _currentMoveAttempts = moveAttemptsPerTurn;
+            _hasCharacterAttacked = false;
         }
     }
 
@@ -174,6 +176,7 @@ public class Character : MonoBehaviour
         transform.localPosition = Vector2.zero;
         _currentMovements--;
         cell.SetIsOccupied(true);
+        cell.SetOccupyingCharacter(this);
         _currentCell = cell;
     }
 
@@ -189,7 +192,7 @@ public class Character : MonoBehaviour
 
     public ActionTarget GetRandomTarget()
     {
-        int index = UnityEngine.Random.Range(0, _targets.Count + 1);
+        int index = UnityEngine.Random.Range(0, _targets.Count);
         return _targets[index];
     }
 

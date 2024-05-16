@@ -37,6 +37,7 @@ public class ActionIcon : MonoBehaviour
 
     public void OnIconClicked()
     {
+        Debug.Log("OnIconClicked received");
         IconClicked?.Invoke(_target);
     }
 }

@@ -22,6 +22,8 @@ public class HPBar : MonoBehaviour
         _currentValue = _maxValue;
         sliderBar.maxValue = _maxValue;
         sliderBar.value = _maxValue;
+
+        Debug.Log($"{name}: initialized with hp value {_currentValue}");
     }
 
     public void UpdateBarOnDamageReceived(float damageReceived)

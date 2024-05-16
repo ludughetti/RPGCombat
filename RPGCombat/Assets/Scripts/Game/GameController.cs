@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    [SerializeField] private Character[] characters;
+    [SerializeField] private List<Character> characters;
     [SerializeField] private GridCell[] cells;
     [SerializeField] private int gridWidth = 6;
     [SerializeField] private int gridHeight = 4;
@@ -141,10 +141,6 @@ public class GameController : MonoBehaviour
         CheckActionAreas();
 
         // Get player and update UI
-        /* 
-         * Player activePlayer = (Player) _activeCharacter;
-        * activePlayer.UpdateIcons(); 
-        */
         _activeCharacter.UpdateIcons();
 
         // If at least one attack array has targets
@@ -191,12 +187,6 @@ public class GameController : MonoBehaviour
             ActionTarget target = _activeCharacter.GetRandomTarget();
             ExecuteActionOnTarget(target);
             _activeCharacter.SetHasCharacterAttacked(true);
-
-            // Check if player dead
-            if (!target.GetTarget().IsAlive())
-            {
-                _isGameOver = true;
-            }
         }
 
         yield return null;
@@ -237,8 +227,10 @@ public class GameController : MonoBehaviour
 
     private void CheckRangeAndAddTarget(int range, bool isHealTarget, bool isMeleeTarget)
     {
+        Debug.Log($"CheckRangeAndAddTarget called for {_activeCharacter.name}. isHealAction: {isHealTarget}, isMeleeTarget: {isMeleeTarget}");
+
         // If it's a self healing character checking for heal targets, add themself and early exit
-        if(isHealTarget && _activeCharacter.IsPlayer() && _activeCharacter.GetHealRange() == 0)
+        if (isHealTarget && _activeCharacter.IsPlayer() && _activeCharacter.GetHealRange() == 0)
         {
             ActionTarget target = new(_activeCharacter);
             _activeCharacter.AddTarget(target);
@@ -276,6 +268,7 @@ public class GameController : MonoBehaviour
      */
     private bool CheckIfTargetIsValidForAction(GridCell cell, bool isHealAction, out Character character)
     {
+        Debug.Log($"CheckIfTargetIsValidForAction called. Position: {cell.GetGridPosition()}, isHealAction: {isHealAction}");
         // Get the character from the cell and assign the out
         Character target = cell.GetOccupyingCharacter();
         character = target;
@@ -300,6 +293,7 @@ public class GameController : MonoBehaviour
     // Attack
     public void ExecuteActionOnTarget(ActionTarget target)
     {
+        Debug.Log("ExecuteActionOnTarget invoked");
         Character characterTarget = target.GetTarget();
 
         if (target.IsHealTarget())
@@ -308,6 +302,23 @@ public class GameController : MonoBehaviour
             _activeCharacter.MeleeAttack(characterTarget);
         else
             _activeCharacter.RangedAttack(characterTarget);
+
+        _activeCharacter.SetHasCharacterAttacked(true);
+
+        // If target died, remove from character rotation
+        CheckTargetStatus(characterTarget);
+    }
+
+    private void CheckTargetStatus(Character target)
+    {
+        if(!target.IsAlive())
+        {
+            characters.Remove(target);
+
+            // Check for endgame
+            if (target.IsPlayer() || characters.Count == 1)
+                _isGameOver = true;
+        }
     }
 
     // Check win

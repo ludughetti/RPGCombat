@@ -11,11 +11,16 @@ public class CharacterUIController : MonoBehaviour
 
     private void OnEnable()
     {
+        character.OnDamageTaken += UpdateBarOnDamageReceived;
+    }
+
+    private void Start()
+    {
         hpBar.InitialSetup(character.GetCurrentHP());
         _characterIcon = character.GetCharacterIcon();
         characterMenuIcon.sprite = _characterIcon;
 
-        character.OnDamageTaken += UpdateBarOnDamageReceived;
+        Debug.Log($"{name}: UI setup for character {character.name}");
     }
 
     private void OnDisable()
@@ -27,16 +32,4 @@ public class CharacterUIController : MonoBehaviour
     {
         hpBar.UpdateBarOnDamageReceived((float)damageReceived);
     }
-
-    // Handle UI input
-
-    // Show heal menu
-
-    // Receive Heal input
-
-    // Show attack menus
-
-    // Receive melee attack input
-
-    // Receive ranged attack input
 }

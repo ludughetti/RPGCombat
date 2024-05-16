@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ActionTarget : MonoBehaviour
+public class ActionTarget
 {
     private Character _target;
     private bool _isHealTarget;
