@@ -133,26 +133,23 @@ public class GameController : MonoBehaviour
     {
         if (_characterToRemove != null)
         {
+            CheckIfEndgameWasTriggered();
             int deadCharacterIndex = characters.IndexOf(_characterToRemove);
             Debug.Log($"Remove character at index {deadCharacterIndex}");
 
             // Should never happen but it's a security check in case IndexOf returns -1 (not found)
             if(deadCharacterIndex >= 0)
+            {
+                _characterToRemove.HideDeadCharacter();
                 characters.RemoveAt(deadCharacterIndex);
+            }
 
             // Reset _characterToRemove and update loop index
             _characterToRemove = null;
             index--;
-
-            CheckIfEndgameWasTriggered();
         }
 
         updatedIndex = index;
-
-        for(int i = 0; i < characters.Count;i++)
-        {
-            Debug.Log($"{characters[i].name} is alive");
-        }
     }
 
     private IEnumerator CharacterPlayTurn()
@@ -347,6 +344,8 @@ public class GameController : MonoBehaviour
 
         _activeCharacter.SetHasCharacterAttacked(true);
 
+        Debug.Log($"{characterTarget.name}'s hp is {characterTarget.GetCurrentHP()}");
+
         // If target died, flag it to be removed from the active characters list
         if (!characterTarget.IsAlive())
         {
@@ -363,11 +362,12 @@ public class GameController : MonoBehaviour
      * Scenarios where endgame is triggered:
      *  - If a player was killed and we're still in PVE stage, or 
      *  - We're in PVP stage and we have only one player standing
+     *    (We check characters.Count == 2 because the dead player hasn't been removed yet)
      */
     private void CheckIfEndgameWasTriggered()
     {
         if ((_characterToRemove.IsPlayer() && _pveEnemiesLeft > 0)
-                || characters.Count == 1)
+                || characters.Count == 2)
             _isGameOver = true;
     }
 }

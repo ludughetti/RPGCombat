@@ -108,7 +108,7 @@ public class Character : MonoBehaviour
 
     public bool IsAlive()
     {
-        return _currentHP >= 0;
+        return _currentHP > 0;
     }
 
     public int GetMeleeRange()
@@ -219,5 +219,10 @@ public class Character : MonoBehaviour
     public virtual void ResetUI()
     {
         Debug.Log("Not implemented for characters");
+    }
+
+    public void HideDeadCharacter()
+    {
+        gameObject.SetActive(false);
     }
 }
