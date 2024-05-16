@@ -215,4 +215,9 @@ public class Character : MonoBehaviour
     {
         Debug.Log("Not implemented for characters");
     }
+
+    public virtual void ResetUI()
+    {
+        Debug.Log("Not implemented for characters");
+    }
 }

@@ -16,11 +16,20 @@ public class PlayerUIController : CharacterUIController
         foreach (ActionTarget target in actionTargets)
         {
             if (target.IsHealTarget())
+            {
+                Debug.Log($"{name}: Heal target {target.GetTarget().name} processed");
                 AssignTargetsToIcons(target, healTargetIcons);
+            }
             else if (target.IsMeleeAttackTarget())
+            {
+                Debug.Log($"{name}: Melee attack target {target.GetTarget().name} processed");
                 AssignTargetsToIcons(target, meleeTargetIcons);
+            }   
             else
+            {
+                Debug.Log($"{name}: Ranged attack target {target.GetTarget().name} processed");
                 AssignTargetsToIcons(target, rangedTargetIcons);
+            }
         }
 
         // Show or hide target icons depending on whether each array has targets
@@ -55,6 +64,10 @@ public class PlayerUIController : CharacterUIController
         ResetOptions(healTargetIcons);
         ResetOptions(meleeTargetIcons);
         ResetOptions(rangedTargetIcons);
+
+        healTargetIcons.Clear();
+        meleeTargetIcons.Clear();
+        rangedTargetIcons.Clear();
 
         ShowHideTargetMenu(healTargetIcons, healMenu);
         ShowHideTargetMenu(meleeTargetIcons, meleeAttackMenu);

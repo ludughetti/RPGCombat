@@ -18,4 +18,9 @@ public class Player : Character
     {
         playerUIController.UpdateIcons();
     }
+
+    public override void ResetUI()
+    {
+        playerUIController.ResetIcons();
+    }
 }

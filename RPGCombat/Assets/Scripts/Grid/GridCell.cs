@@ -14,7 +14,6 @@ public class GridCell : MonoBehaviour
 
     public bool IsOccupied()
     {
-        Debug.Log($"{name}: _isOccupied has value {_isOccupied}, position ({gridPosition})");
         return _isOccupied;
     }
 

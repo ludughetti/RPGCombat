@@ -19,6 +19,7 @@ public class ActionIcon : MonoBehaviour
     public void SetTarget(ActionTarget target)
     {
         _target = target;
+        _hasTarget = true;
         icon.sprite = _target.GetTarget().GetCharacterIcon();
         gameObject.SetActive(true);
     }

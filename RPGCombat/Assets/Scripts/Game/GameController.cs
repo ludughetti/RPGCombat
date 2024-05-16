@@ -14,6 +14,7 @@ public class GameController : MonoBehaviour
     private int _pveEnemiesLeft;
     private Character _activeCharacter;
     private Dictionary<Vector2, GridCell> _cellsByPosition = new Dictionary<Vector2, GridCell>();
+    private Character _characterToRemove;
 
     private void OnEnable()
     {
@@ -100,34 +101,73 @@ public class GameController : MonoBehaviour
 
         while (!_isGameOver)
         {
-            foreach (var character in characters)
-            {
-                Debug.Log($"{name}: Starting {character.name}'s turn.");
-                // Wait until player turn is over
-                yield return CharacterPlayTurn(character);
-                Debug.Log($"{name}: Finished {character.name}'s turn.");
-            }
-
             _turnCounter++;
+
+            for (int i = 0; i < characters.Count; i++) { 
+                _activeCharacter = characters[i];
+                Debug.Log($"{name}: Starting {_activeCharacter.name}'s turn.");
+                if (!_activeCharacter.IsAlive())
+                {
+                    Debug.Log($"{name}: {_activeCharacter.name} is dead! Turn skipped.");
+                    continue;
+                }
+
+                // Wait until character turn is over
+                yield return CharacterPlayTurn();
+                Debug.Log($"{name}: Finished {_activeCharacter.name}'s turn.");
+
+                // If a character died, we need to remove it and rearrange the loop index
+                RemoveDeadCharacter(i, out i);
+
+                // Break loop if game over was triggered
+                if (_isGameOver)
+                    break;
+            }
         }
 
+        Debug.Log($"Game over! {characters[0].name} won!");
         yield return null;
     }
 
-    private IEnumerator CharacterPlayTurn(Character character)
+    private void RemoveDeadCharacter(int index, out int updatedIndex)
     {
-        _activeCharacter = character;
+        if (_characterToRemove != null)
+        {
+            int deadCharacterIndex = characters.IndexOf(_characterToRemove);
+            Debug.Log($"Remove character at index {deadCharacterIndex}");
+
+            // Should never happen but it's a security check in case IndexOf returns -1 (not found)
+            if(deadCharacterIndex >= 0)
+                characters.RemoveAt(deadCharacterIndex);
+
+            // Reset _characterToRemove and update loop index
+            _characterToRemove = null;
+            index--;
+
+            CheckIfEndgameWasTriggered();
+        }
+
+        updatedIndex = index;
+
+        for(int i = 0; i < characters.Count;i++)
+        {
+            Debug.Log($"{characters[i].name} is alive");
+        }
+    }
+
+    private IEnumerator CharacterPlayTurn()
+    {
         // Turn on UI and reset character's speed
-        character.ToggleIsCharacterActive(true);
+        _activeCharacter.ToggleIsCharacterActive(true);
 
         // Wait for character to play its turn
-        if (character.IsPlayer())
+        if (_activeCharacter.IsPlayer())
             yield return StartCoroutine(PlayerTurn());
         else
             yield return StartCoroutine(EnemyTurn());
 
         // Turn off UI before moving on to the next character
-        character.ToggleIsCharacterActive(false);
+        _activeCharacter.ToggleIsCharacterActive(false);
     }
 
     private IEnumerator PlayerTurn()
@@ -151,6 +191,8 @@ public class GameController : MonoBehaviour
                 yield return new WaitForEndOfFrame();
         }
 
+        // Refresh UI
+        _activeCharacter.ResetUI();
 
         Debug.Log($"{_activeCharacter.name}: Turn finished.");
 
@@ -293,8 +335,8 @@ public class GameController : MonoBehaviour
     // Attack
     public void ExecuteActionOnTarget(ActionTarget target)
     {
-        Debug.Log("ExecuteActionOnTarget invoked");
         Character characterTarget = target.GetTarget();
+        Debug.Log($"{_activeCharacter.name} is executing action on {characterTarget.name}");
 
         if (target.IsHealTarget())
             _activeCharacter.HealTarget((Player) characterTarget);
@@ -305,25 +347,27 @@ public class GameController : MonoBehaviour
 
         _activeCharacter.SetHasCharacterAttacked(true);
 
-        // If target died, remove from character rotation
-        CheckTargetStatus(characterTarget);
-    }
-
-    private void CheckTargetStatus(Character target)
-    {
-        if(!target.IsAlive())
+        // If target died, flag it to be removed from the active characters list
+        if (!characterTarget.IsAlive())
         {
-            characters.Remove(target);
+            Debug.Log($"{name}: {characterTarget.name} was killed.");
+            _characterToRemove = characterTarget;
 
-            // Check for endgame
-            if (target.IsPlayer() || characters.Count == 1)
-                _isGameOver = true;
+            if(!characterTarget.IsPlayer())
+                _pveEnemiesLeft--;
         }
     }
 
-    // Check win
-
-    // Show endgame message
-
-
+    /*
+     * If attacked target was killed we check if endgame was triggered.
+     * Scenarios where endgame is triggered:
+     *  - If a player was killed and we're still in PVE stage, or 
+     *  - We're in PVP stage and we have only one player standing
+     */
+    private void CheckIfEndgameWasTriggered()
+    {
+        if ((_characterToRemove.IsPlayer() && _pveEnemiesLeft > 0)
+                || characters.Count == 1)
+            _isGameOver = true;
+    }
 }
